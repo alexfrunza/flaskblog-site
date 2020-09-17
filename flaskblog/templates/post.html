@@ -1,0 +1,98 @@
+{% extends 'layout.html' %}
+{% block content %}
+    <article class="media content-section">
+        <img src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}" alt="" class="rounded-circle article-img">
+        <div class="media-body">
+            <div class="article-metadata">
+                <a class="mr-2" href="{{ url_for('users.user_posts', username=post.author.username) }}">{{ post.author.username }}</a>
+                <small class="text-muted">{{ post.date_posted.strftime('%d-%m-%Y') }}</small>
+                {% if post.author == current_user %}
+                    <div>
+                        <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('posts.update_post', post_id=post.id) }}">Update</a>
+                        <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+                    </div>
+                {% endif %}
+            </div>
+            <h2 class="article-title">{{ post.title }}</h2>
+            <p class="article-content">{{ post.content }}</p>
+            <div class="article-footer">
+                <h5>Likes: {{ post.likes.count() }}</h5>
+                <h5>Comments: {{ comments.count() }}</h5>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.has_liked_post(post) %}
+                        <a class="btn btn-outline-danger" href="{{ url_for('posts.dislike_action', post_id=post.id) }}">Dislike</a>
+                    {% else %}
+                        <a class="btn btn-outline-success" href="{{ url_for('posts.like_action', post_id=post.id) }}">Like</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </article>
+    <h1 class="article-title">Comments: </h1>
+    {% if current_user.is_authenticated %}
+        <div class="media content-section">
+        <img src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}" alt="" class="rounded-circle article-img">
+            <form method="post" action="">
+                {{ form.hidden_tag() }}
+                <fieldset class="form-group">
+                    <div class="form-group">
+                        {{ form.content.label(class="form-control-label") }}
+                        {% if form.content.errors %}
+                            {{ form.content(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.content.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.content(class="form-control form-control-lg") }}
+                        {% endif %}
+                    </div>
+                </fieldset>
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-outline-info") }}
+                </div>
+            </form>
+        </div>
+    {% endif %}
+    {% for comment in comments %}
+        <article class="media content-section">
+            <img src="{{ url_for('static', filename='profile_pics/' + comment.user.image_file) }}" alt="" class="rounded-circle article-img">
+            <div class="media-body">
+                <div class="article-metadata">
+                    <a class="mr-2" href="{{ url_for('users.user_posts', username=comment.user.username) }}">{{ comment.user.username }}</a>
+                    <small class="text-muted">{{ comment.date_posted.strftime('%d-%m-%Y') }}</small>
+                    <div>
+                        {% if comment.user == current_user %}
+                            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('posts.update_comment', post_id=post.id, comment_id=comment.id) }}">Update</a>
+                        {% endif %}
+                        {% if post.author == current_user or comment.user == current_user%}
+                            <a class="btn btn-danger btn-sm m-1" href="{{ url_for('posts.delete_comment', post_id=post.id, comment_id=comment.id) }}">Delete</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <p class="article-content">{{ comment.content }}</p>
+            </div>
+        </article>
+    {% endfor  %}
+
+    <!-- Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Delete Post?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="POST">
+                        <input class="btn btn-danger" type="submit" value="Delete">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
